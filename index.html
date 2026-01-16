@@ -15,6 +15,7 @@
       <nav class="tabs">
         <button class="tab is-active" data-tab="home">Home</button>
         <button class="tab" data-tab="draft">Draft</button>
+        <button class="tab" data-tab="leaderboard">Leaderboards</button>
       </nav>
     </header>
 
@@ -30,43 +31,51 @@
               </label>
               <label>
                 Team Name
-                <input type="text" name="team" placeholder="Snow Owls" required />
+                <select name="team" required>
+                  <option value="" disabled selected>Select team</option>
+                  <option value="KCT">KCT</option>
+                  <option value="Lore">Lore</option>
+                  <option value="HC">HC</option>
+                </select>
               </label>
               <label>
-                Nationality Flag
-                <input
-                  type="text"
-                  name="flag"
-                  placeholder="🇺🇸 / 🇫🇷 / 🇨🇦"
-                  required
-                />
+                Nationality
+                <select id="nationality" name="flagId" required></select>
               </label>
               <label>
                 Profile Picture
-                <input type="file" name="photo" accept="image/*" required />
+                <input type="file" name="photo" accept="image/*" />
+                <span class="field-hint" id="photo-hint"
+                  >Required for new players.</span
+                >
               </label>
 
               <div class="stats-grid">
                 <label>
                   Ski
-                  <input type="number" name="ski" min="1" max="99" required />
+                  <input type="number" name="ski" min="0" max="99" required />
                 </label>
                 <label>
                   Drnk
-                  <input type="number" name="drnk" min="1" max="99" required />
+                  <input type="number" name="drnk" min="0" max="99" required />
                 </label>
                 <label>
                   Chaos
-                  <input type="number" name="chaos" min="1" max="99" required />
+                  <input type="number" name="chaos" min="0" max="99" required />
                 </label>
                 <label>
                   Coord
-                  <input type="number" name="coord" min="1" max="99" required />
+                  <input type="number" name="coord" min="0" max="99" required />
                 </label>
               </div>
 
               <div class="form-actions">
-                <button type="submit" class="primary">Add Player</button>
+                <button type="submit" class="primary" id="submit-player">
+                  Add Player
+                </button>
+                <button type="button" class="ghost" id="cancel-edit">
+                  Cancel Edit
+                </button>
                 <button type="reset" class="ghost">Reset</button>
               </div>
             </form>
@@ -75,13 +84,6 @@
           <div class="card">
             <div class="card__header">
               <h2>Players</h2>
-              <div class="card__actions">
-                <button id="export-data" class="ghost">Download Data</button>
-                <label class="ghost file-label">
-                  Import Data
-                  <input id="import-data" type="file" accept="application/json" />
-                </label>
-              </div>
             </div>
             <p class="hint">
               Select up to 3 captains. Captains are highlighted on their cards.
@@ -106,6 +108,41 @@
             <div>
               <h3>Captains</h3>
               <ul id="captain-list"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="leaderboard">
+        <div class="card">
+          <h2>Leaderboards</h2>
+          <div class="leaderboard-grid">
+            <div>
+              <h3>Individual</h3>
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-individual"></tbody>
+              </table>
+            </div>
+            <div>
+              <h3>Teams</h3>
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Team</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-teams"></tbody>
+              </table>
             </div>
           </div>
         </div>

@@ -3,23 +3,56 @@ const CAPTAIN_LIMIT = 3;
 
 const form = document.getElementById("player-form");
 const playersEl = document.getElementById("players");
-const exportBtn = document.getElementById("export-data");
-const importInput = document.getElementById("import-data");
 const draftOrderEl = document.getElementById("draft-order");
 const captainListEl = document.getElementById("captain-list");
+const nationalitySelect = document.getElementById("nationality");
+const submitButton = document.getElementById("submit-player");
+const cancelEditButton = document.getElementById("cancel-edit");
+const photoHint = document.getElementById("photo-hint");
+const leaderboardIndividualEl = document.getElementById(
+  "leaderboard-individual"
+);
+const leaderboardTeamsEl = document.getElementById("leaderboard-teams");
 const tabs = document.querySelectorAll(".tab");
 const panels = document.querySelectorAll(".panel");
 
 const state = {
   players: [],
 };
+const editState = {
+  id: null,
+};
+
+const FLAGS = [
+  { id: "usa", label: "United States", file: "usa flag.png" },
+  { id: "canada", label: "Canada", file: "canada flag.png" },
+  { id: "uk", label: "United Kingdom", file: "uk flag.png" },
+  { id: "china", label: "China", file: "china flag.png" },
+  { id: "colombia", label: "Colombia", file: "colombia flag.png" },
+  { id: "dominican", label: "Dominican Republic", file: "dr flag.png" },
+  { id: "italy", label: "Italy", file: "italy flag.png" },
+  { id: "japan", label: "Japan", file: "japan flag.png" },
+  { id: "switzerland", label: "Switzerland", file: "switzerland flag.png" },
+  { id: "vietnam", label: "Vietnam", file: "vietnam flag.png" },
+];
 
 const toNumber = (value) => Number.parseInt(value, 10);
+
+const getFlagData = (id) => FLAGS.find((flag) => flag.id === id);
+
+const getFlagSrc = (id) => {
+  const data = getFlagData(id);
+  if (!data) return "";
+  return encodeURI(`flag/${data.file}`);
+};
 
 const averageRating = (player) => {
   const total = player.ski + player.drnk + player.chaos + player.coord;
   return Math.round(total / 4);
 };
+
+const totalScore = (player) =>
+  player.ski + player.drnk + player.chaos + player.coord;
 
 const savePlayers = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.players));
@@ -67,6 +100,61 @@ const updateDraftPreview = () => {
   });
 };
 
+const updateLeaderboards = () => {
+  if (!leaderboardIndividualEl || !leaderboardTeamsEl) return;
+  leaderboardIndividualEl.innerHTML = "";
+  leaderboardTeamsEl.innerHTML = "";
+
+  if (state.players.length === 0) {
+    leaderboardIndividualEl.innerHTML =
+      "<tr><td colspan='4'>No players yet. Add players to see rankings.</td></tr>";
+    leaderboardTeamsEl.innerHTML =
+      "<tr><td colspan='3'>No teams yet. Add players to see rankings.</td></tr>";
+    return;
+  }
+
+  const individual = state.players
+    .map((player) => ({
+      id: player.id,
+      name: player.name,
+      team: player.team,
+      score: totalScore(player),
+    }))
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+
+  individual.forEach((player, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${player.name}</td>
+      <td>${player.team}</td>
+      <td>${player.score}</td>
+    `;
+    leaderboardIndividualEl.appendChild(row);
+  });
+
+  const teamMap = new Map();
+  state.players.forEach((player) => {
+    const entry = teamMap.get(player.team) || { team: player.team, score: 0 };
+    entry.score += totalScore(player);
+    teamMap.set(player.team, entry);
+  });
+
+  const teams = Array.from(teamMap.values()).sort(
+    (a, b) => b.score - a.score || a.team.localeCompare(b.team)
+  );
+
+  teams.forEach((team, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${team.team}</td>
+      <td>${team.score}</td>
+    `;
+    leaderboardTeamsEl.appendChild(row);
+  });
+};
+
 const renderPlayers = () => {
   playersEl.innerHTML = "";
 
@@ -78,12 +166,26 @@ const renderPlayers = () => {
   }
 
   state.players.forEach((player) => {
+    const flagId = player.flagId || player.nationality;
+    const flagSrc = player.flagSrc || getFlagSrc(flagId) || player.flag;
+    const flagLabel = getFlagData(flagId)?.label || "Flag";
     const card = document.createElement("div");
     card.className = `fifa-card${player.isCaptain ? " is-captain" : ""}`;
     card.innerHTML = `
+      <div class="card-menu">
+        <button class="menu-button" type="button" aria-label="Card menu">⋮</button>
+        <div class="menu-dropdown">
+          <button class="menu-item edit" data-id="${player.id}" type="button">Edit</button>
+          <button class="menu-item delete" data-id="${player.id}" type="button">Delete</button>
+        </div>
+      </div>
       <div class="fifa-card__top">
         <span class="fifa-card__rating">${averageRating(player)}</span>
-        <span class="fifa-card__flag">${player.flag}</span>
+        ${
+          flagSrc && flagSrc.includes(".png")
+            ? `<img class="fifa-card__flag" src="${flagSrc}" alt="${flagLabel} flag" />`
+            : `<span class="fifa-card__flag-text">${flagSrc || "🏔️"}</span>`
+        }
       </div>
       <img class="fifa-card__image" src="${player.photo}" alt="${
       player.name
@@ -104,6 +206,16 @@ const renderPlayers = () => {
       </label>
     `;
 
+    const menuButton = card.querySelector(".menu-button");
+    const menuDropdown = card.querySelector(".menu-dropdown");
+    menuButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      document.querySelectorAll(".menu-dropdown").forEach((menu) => {
+        if (menu !== menuDropdown) menu.classList.remove("is-open");
+      });
+      menuDropdown.classList.toggle("is-open");
+    });
+
     const toggle = card.querySelector("input[type='checkbox']");
     toggle.addEventListener("change", (event) => {
       const updated = state.players.map((item) => {
@@ -122,10 +234,27 @@ const renderPlayers = () => {
       renderPlayers();
     });
 
+    const deleteBtn = card.querySelector(".menu-item.delete");
+    deleteBtn.addEventListener("click", () => {
+      const shouldDelete = window.confirm(
+        `Delete ${player.name}'s card?`
+      );
+      if (!shouldDelete) return;
+      state.players = state.players.filter((item) => item.id !== player.id);
+      savePlayers();
+      renderPlayers();
+    });
+
+    const editBtn = card.querySelector(".menu-item.edit");
+    editBtn.addEventListener("click", () => {
+      startEdit(player);
+    });
+
     playersEl.appendChild(card);
   });
 
   updateDraftPreview();
+  updateLeaderboards();
 };
 
 const readFileAsDataUrl = (file) =>
@@ -141,59 +270,47 @@ form.addEventListener("submit", async (event) => {
   const data = new FormData(form);
   const photoFile = data.get("photo");
 
-  if (!(photoFile instanceof File) || photoFile.size === 0) {
+  const flagId = data.get("flagId");
+  const isEditing = Boolean(editState.id);
+  const existing = state.players.find((item) => item.id === editState.id);
+
+  if (!isEditing && (!(photoFile instanceof File) || photoFile.size === 0)) {
     return;
   }
 
-  const photo = await readFileAsDataUrl(photoFile);
+  const photo =
+    photoFile instanceof File && photoFile.size > 0
+      ? await readFileAsDataUrl(photoFile)
+      : existing?.photo;
+
+  if (!photo) return;
 
   const player = {
-    id: crypto.randomUUID(),
+    id: existing?.id ?? crypto.randomUUID(),
     name: data.get("name").trim(),
     team: data.get("team").trim(),
-    flag: data.get("flag").trim(),
+    flagId,
+    flagSrc: getFlagSrc(flagId),
     photo,
     ski: toNumber(data.get("ski")),
     drnk: toNumber(data.get("drnk")),
     chaos: toNumber(data.get("chaos")),
     coord: toNumber(data.get("coord")),
-    isCaptain: false,
+    isCaptain: existing?.isCaptain ?? false,
   };
 
-  state.players = [player, ...state.players];
+  if (isEditing) {
+    state.players = state.players.map((item) =>
+      item.id === editState.id ? player : item
+    );
+  } else {
+    state.players = [player, ...state.players];
+  }
+
+  resetEditMode();
   savePlayers();
   form.reset();
   renderPlayers();
-});
-
-exportBtn.addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(state.players, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "tahoe-trip-players.json";
-  link.click();
-  URL.revokeObjectURL(url);
-});
-
-importInput.addEventListener("change", async (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  const text = await file.text();
-  try {
-    const imported = JSON.parse(text);
-    if (Array.isArray(imported)) {
-      state.players = imported;
-      savePlayers();
-      renderPlayers();
-    }
-  } catch (error) {
-    console.warn("Failed to import data", error);
-  } finally {
-    importInput.value = "";
-  }
 });
 
 tabs.forEach((tab) => {
@@ -204,9 +321,63 @@ tabs.forEach((tab) => {
     const target = document.getElementById(tab.dataset.tab);
     target.classList.add("is-active");
     updateDraftPreview();
+    updateLeaderboards();
   });
 });
 
+const populateNationalities = () => {
+  if (!nationalitySelect) return;
+  nationalitySelect.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select nationality";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  nationalitySelect.appendChild(placeholder);
+
+  FLAGS.forEach((nation) => {
+    const option = document.createElement("option");
+    option.value = nation.id;
+    option.textContent = nation.label;
+    nationalitySelect.appendChild(option);
+  });
+};
+
+const startEdit = (player) => {
+  editState.id = player.id;
+  form.name.value = player.name;
+  form.team.value = player.team;
+  form.flagId.value = player.flagId || player.nationality || "";
+  form.ski.value = player.ski;
+  form.drnk.value = player.drnk;
+  form.chaos.value = player.chaos;
+  form.coord.value = player.coord;
+  submitButton.textContent = "Update Player";
+  cancelEditButton.style.display = "inline-flex";
+  photoHint.textContent = "Leave blank to keep the current photo.";
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const resetEditMode = () => {
+  editState.id = null;
+  submitButton.textContent = "Add Player";
+  cancelEditButton.style.display = "none";
+  photoHint.textContent = "Required for new players.";
+};
+
+cancelEditButton.addEventListener("click", () => {
+  form.reset();
+  resetEditMode();
+});
+
+document.addEventListener("click", () => {
+  document.querySelectorAll(".menu-dropdown").forEach((menu) => {
+    menu.classList.remove("is-open");
+  });
+});
+
+populateNationalities();
+resetEditMode();
 loadPlayers();
 renderPlayers();
 
