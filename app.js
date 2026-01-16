@@ -46,6 +46,13 @@ const getFlagSrc = (id) => {
   return encodeURI(`flag/${data.file}`);
 };
 
+const generateId = () => {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
 const averageRating = (player) => {
   const total = player.ski + player.drnk + player.chaos + player.coord;
   return Math.round(total / 4);
@@ -55,13 +62,17 @@ const totalScore = (player) =>
   player.ski + player.drnk + player.chaos + player.coord;
 
 const savePlayers = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.players));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.players));
+  } catch (error) {
+    console.warn("Failed to save players", error);
+  }
 };
 
 const loadPlayers = () => {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return;
   try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
     state.players = JSON.parse(saved);
   } catch (error) {
     console.warn("Failed to load saved players", error);
@@ -275,6 +286,7 @@ form.addEventListener("submit", async (event) => {
   const existing = state.players.find((item) => item.id === editState.id);
 
   if (!isEditing && (!(photoFile instanceof File) || photoFile.size === 0)) {
+    photoHint.textContent = "Please add a photo to create a player.";
     return;
   }
 
@@ -286,7 +298,7 @@ form.addEventListener("submit", async (event) => {
   if (!photo) return;
 
   const player = {
-    id: existing?.id ?? crypto.randomUUID(),
+    id: existing?.id ?? generateId(),
     name: data.get("name").trim(),
     team: data.get("team").trim(),
     flagId,
