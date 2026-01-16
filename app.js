@@ -30,6 +30,7 @@ const FLAGS = [
   { id: "china", label: "China", file: "china flag.png" },
   { id: "colombia", label: "Colombia", file: "colombia flag.png" },
   { id: "dominican", label: "Dominican Republic", file: "dr flag.png" },
+  { id: "india", label: "India", file: "india flag.png" },
   { id: "italy", label: "Italy", file: "italy flag.png" },
   { id: "japan", label: "Japan", file: "japan flag.png" },
   { id: "switzerland", label: "Switzerland", file: "switzerland flag.png" },
