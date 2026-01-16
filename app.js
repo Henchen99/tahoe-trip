@@ -327,6 +327,7 @@ tabs.forEach((tab) => {
 
 const populateNationalities = () => {
   if (!nationalitySelect) return;
+  if (nationalitySelect.options.length > 1) return;
   nationalitySelect.innerHTML = "";
   const placeholder = document.createElement("option");
   placeholder.value = "";
