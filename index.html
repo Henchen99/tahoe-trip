@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tahoe Trip Teams</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand__title">Tahoe Trip</span>
+        <span class="brand__subtitle">Fantasy Draft</span>
+      </div>
+      <nav class="tabs">
+        <button class="tab is-active" data-tab="home">Home</button>
+        <button class="tab" data-tab="draft">Draft</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="panel is-active" id="home">
+        <div class="layout">
+          <div class="card">
+            <h2>Create Player</h2>
+            <form id="player-form" class="form">
+              <label>
+                Name
+                <input type="text" name="name" required />
+              </label>
+              <label>
+                Team Name
+                <input type="text" name="team" placeholder="Snow Owls" required />
+              </label>
+              <label>
+                Nationality Flag
+                <input
+                  type="text"
+                  name="flag"
+                  placeholder="🇺🇸 / 🇫🇷 / 🇨🇦"
+                  required
+                />
+              </label>
+              <label>
+                Profile Picture
+                <input type="file" name="photo" accept="image/*" required />
+              </label>
+
+              <div class="stats-grid">
+                <label>
+                  Ski
+                  <input type="number" name="ski" min="1" max="99" required />
+                </label>
+                <label>
+                  Drnk
+                  <input type="number" name="drnk" min="1" max="99" required />
+                </label>
+                <label>
+                  Chaos
+                  <input type="number" name="chaos" min="1" max="99" required />
+                </label>
+                <label>
+                  Coord
+                  <input type="number" name="coord" min="1" max="99" required />
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="primary">Add Player</button>
+                <button type="reset" class="ghost">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card__header">
+              <h2>Players</h2>
+              <div class="card__actions">
+                <button id="export-data" class="ghost">Download Data</button>
+                <label class="ghost file-label">
+                  Import Data
+                  <input id="import-data" type="file" accept="application/json" />
+                </label>
+              </div>
+            </div>
+            <p class="hint">
+              Select up to 3 captains. Captains are highlighted on their cards.
+            </p>
+            <div id="players" class="cards-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="draft">
+        <div class="card">
+          <h2>Draft</h2>
+          <p>
+            Draft mode is coming next. We will use a snake draft order: Captain
+            1 picks, Captain 2 picks, Captain 3 picks twice, then reverse back.
+          </p>
+          <div class="draft-preview">
+            <div>
+              <h3>Draft Order Preview</h3>
+              <ol id="draft-order"></ol>
+            </div>
+            <div>
+              <h3>Captains</h3>
+              <ul id="captain-list"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
+
